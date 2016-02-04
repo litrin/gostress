@@ -4,11 +4,16 @@ import (
 	"runtime"
 	"flag"
 	"time"
+	"net/http"
+	"io/ioutil"
 )
 
 var cpuNumber = flag.Int("cpu", 0, "Process number")
 var duration = flag.Int("time", 0, "Runing mintues")
 var memory = flag.Int("memory", 1, "Use memory size(M)")
+var callback_uri = flag.String("callback", "", "Call back uri")
+
+const hog_deep = 38
 
 func userInput() {
 	flag.Parse()
@@ -42,7 +47,8 @@ func main() {
 
 func threads() {
 	for i := 0; true; i ++ {
-		cpuHog(38)
+		cpuHog(hog_deep)
+		callback()
 	}
 }
 
@@ -71,3 +77,21 @@ func cpuHog(i int) (result uint64) {
 	}
 	return cpuHog(i - 1) + cpuHog(i - 2) - cpuHog(i - 5)
 }
+
+func callback() (bool) {
+
+	if *callback_uri == ""{
+		return false
+	}
+	res, err := http.Get(*callback_uri)
+	if err != nil {
+		return false
+	}
+
+	_, err = ioutil.ReadAll(res.Body)
+	if err != nil {
+		return false
+	}
+	return true
+}
+
